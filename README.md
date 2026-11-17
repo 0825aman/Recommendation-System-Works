@@ -13,8 +13,8 @@ The platform combines multiple recommendation strategies:
 - **ML Ranking** — re-rank candidates using learned user preferences
 - **Feedback Loop** — continuously improve recommendations from user interactions
 
-> **Current Status: Phase 1 — Foundation**
-> The recommendation engine is not yet implemented. Phase 1 establishes the complete local development foundation.
+> **Current Status: Phase 2 — Data Engineering ✅ Complete**
+> Phase 1 (foundation) and Phase 2 (data engineering) are complete. KuaiRec 2.0 (4.6M interactions) has been acquired, validated, cleaned, and converted to Parquet. Phase 3 (Recommendation Engine) is next.
 
 ---
 
@@ -22,8 +22,8 @@ The platform combines multiple recommendation strategies:
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + TypeScript + Vite |
-| Backend | Python 3.13 + FastAPI |
+| Frontend | React 19 + TypeScript + Vite |
+| Backend | Python 3.14 + FastAPI |
 | Database | PostgreSQL 16 |
 | ORM | SQLAlchemy |
 | Migrations | Alembic |
@@ -114,14 +114,12 @@ Frontend available at: `http://localhost:5173`
 
 ## Running Tests
 
-### Backend
+### Backend (Phase 1 + Phase 2 — 62 tests)
 
 ```powershell
-cd backend
-.venv\Scripts\Activate.ps1
-pytest tests/ -v
-ruff check app/
-ruff format --check app/
+# From project root
+backend\.venv\Scripts\pytest.exe backend/tests/ -v
+backend\.venv\Scripts\ruff.exe check backend/app/ scripts/data/
 ```
 
 ### Frontend
@@ -135,12 +133,27 @@ npm run build
 
 ---
 
+## Phase 2 Data Pipeline
+
+```powershell
+# From project root (requires backend venv + dataset downloaded)
+backend\.venv\Scripts\python.exe scripts/data/download_dataset.py
+backend\.venv\Scripts\python.exe scripts/data/inspect_dataset.py
+backend\.venv\Scripts\python.exe scripts/data/validate_dataset.py
+backend\.venv\Scripts\python.exe scripts/data/convert_to_parquet.py
+backend\.venv\Scripts\python.exe scripts/data/generate_report.py
+```
+
+> **Note:** Dataset files (~1.5 GB) are excluded from Git. Run `download_dataset.py` after cloning.
+
+---
+
 ## Project Structure
 
 ```
 hybrid-recommendation-intelligence-platform/
 ├── frontend/           # React + TypeScript + Vite
-├── backend/            # Python 3.13 + FastAPI
+├── backend/            # Python 3.14 + FastAPI
 ├── data/               # Data files (excluded from Git)
 ├── ml/                 # ML modules (Phase 2+)
 ├── notebooks/          # Jupyter notebooks (Phase 2+)
@@ -158,8 +171,8 @@ hybrid-recommendation-intelligence-platform/
 
 | Phase | Scope | Status |
 |---|---|---|
-| **Phase 1** | Foundation — dev environment, API skeleton, database | 🔄 In Progress |
-| Phase 2 | Data Layer — ingestion, schema, Polars/DuckDB | ⏳ Planned |
+| **Phase 1** | Foundation — dev environment, API skeleton, database | ✅ Complete |
+| **Phase 2** | Data Engineering — KuaiRec 2.0 acquisition, Parquet pipeline, quality report | ✅ Complete |
 | Phase 3 | Recommendation Engine — content-based, collaborative, hybrid | ⏳ Planned |
 | Phase 4 | ML Ranking — candidate generation, model serving | ⏳ Planned |
 | Phase 5 | Feedback Loop — online learning, A/B testing, monitoring | ⏳ Planned |
@@ -172,7 +185,12 @@ hybrid-recommendation-intelligence-platform/
 - [`docs/database/database-overview.md`](docs/database/database-overview.md) — Schema rationale and Alembic workflow
 - [`docs/api/api-overview.md`](docs/api/api-overview.md) — Endpoint reference
 - [`docs/phases/phase-1-setup-guide.md`](docs/phases/phase-1-setup-guide.md) — Step-by-step setup guide for Windows
-- [`docs/decisions/architecture-decisions.md`](docs/decisions/architecture-decisions.md) — Architecture Decision Records
+- [`docs/decisions/architecture-decisions.md`](docs/decisions/architecture-decisions.md) — Architecture Decision Records (ADR-001 through ADR-D-P2-05)
+- [`docs/data/dataset-overview.md`](docs/data/dataset-overview.md) — KuaiRec 2.0 dataset summary
+- [`docs/data/data-dictionary.md`](docs/data/data-dictionary.md) — Column-level data dictionary
+- [`docs/data/data-acquisition-guide.md`](docs/data/data-acquisition-guide.md) — How to re-acquire the dataset
+- [`docs/data/data-pipeline.md`](docs/data/data-pipeline.md) — Phase 2 pipeline design and conventions
+- [`docs/data/data-quality-report.md`](docs/data/data-quality-report.md) — Data quality findings
 - [`AGENTS.md`](AGENTS.md) — AI development contract and project rules
 
 ---

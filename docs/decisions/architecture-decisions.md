@@ -178,3 +178,132 @@ Accept the Vite 8 default and use `oxlint`. Do not replace it with traditional E
 - Already included in `package.json` by the Vite scaffold
 - TypeScript type checking is handled separately by `tsc --noEmit`, which is more
   thorough than any linter's type rules
+
+
+---
+
+## ADR-009 — Python 3.14 Correction (Phase 2 Discovery)
+
+**Status:** Accepted  
+**Phase:** 2
+
+**Context:**  
+ADR-002 documented the runtime as Python 3.13 based on Phase 1 inspection. During Phase 2,
+closer inspection of the virtual environment pip binary (`pip3.14`) revealed the actual
+runtime is Python 3.14.5.
+
+**Decision:**  
+Accept Python 3.14. Update `AGENTS.md` and documentation to reflect the actual version.
+
+**Rationale:**  
+- All Phase 2 libraries (Polars, DuckDB, PyArrow, tqdm, requests, rich) are compatible
+  with Python 3.14
+- No re-installation is required — the virtual environment functions correctly
+- Keeping documentation accurate prevents confusion for future sessions
+
+---
+
+## ADR-D-P2-01 — Full KuaiRec 2.0 Download
+
+**Status:** Accepted  
+**Phase:** 2
+
+**Context:**  
+KuaiRec 2.0 is distributed as a zip file plus separate additional files on Zenodo
+(~417 MB total). An alternative is to download only the Phase 2 scope files.
+
+**Decision:**  
+Download all 9 files in full.
+
+**Rationale:**  
+- Downloading selectively would require re-running downloads when Phase 3 files are needed
+- 417 MB is manageable on a development machine
+- Checksums for all files are verified on download — partial downloads risk silent corruption
+- Provenance is cleaner: one complete, verified acquisition
+
+---
+
+## ADR-D-P2-02 — Polars for Transforms, DuckDB for Analytics
+
+**Status:** Accepted  
+**Phase:** 2
+
+**Context:**  
+Both Polars and DuckDB can process tabular data. The question was whether to use one or both.
+
+**Decision:**  
+Use Polars for data cleaning and type transformation, and DuckDB for SQL analytics and
+report generation.
+
+**Rationale:**  
+- Polars' DataFrame API is better suited to column-wise type manipulation (casting,
+  parsing, adding derived columns)
+- DuckDB's SQL interface is more natural for aggregations, distributions, and
+  cross-file joins used in the quality report
+- Both tools operate on Parquet files efficiently — no duplication of data
+- Phase 3 will require both for feature engineering pipelines
+
+---
+
+## ADR-D-P2-03 — Data Scripts in `scripts/data/`, Not in `app/`
+
+**Status:** Accepted  
+**Phase:** 2
+
+**Context:**  
+The data processing scripts could be placed inside the FastAPI application (`backend/app/`)
+or as standalone scripts in `scripts/data/`.
+
+**Decision:**  
+Place all data processing scripts in `scripts/data/`. They are run directly from the
+command line, not through the API.
+
+**Rationale:**  
+- Data processing is an offline, batch operation — not a web request
+- Including it in `app/` would couple the API server to data engineering dependencies
+- Scripts in `scripts/data/` can be run independently of Docker or the FastAPI server
+- Future ML training scripts will follow the same pattern
+
+---
+
+## ADR-D-P2-04 — Defer big_matrix and Three Files to Phase 3
+
+**Status:** Accepted  
+**Phase:** 2
+
+**Context:**  
+KuaiRec 2.0 includes `big_matrix.csv` (1,033 MB), `item_daily_features.csv`,
+`social_network.csv`, and `video_raw_categories_multi.csv`. These were not converted
+to Parquet in Phase 2.
+
+**Decision:**  
+Convert only the 5 Phase 2 scope files. Defer the remaining 4 files to Phase 3.
+
+**Rationale:**  
+- `big_matrix.csv` at 1,033 MB cannot be loaded into memory on a 16 GB development
+  machine alongside other processes — it requires streaming or chunked processing
+- `item_daily_features` and `social_network` are only needed for advanced collaborative
+  filtering and graph-based recommendations (Phase 3+)
+- `video_raw_categories_multi` is redundant with `item_categories` for Phase 2 purposes
+- Deferring keeps Phase 2 tractable and testable
+
+---
+
+## ADR-D-P2-05 — PostgreSQL Untouched in Phase 2
+
+**Status:** Accepted  
+**Phase:** 2
+
+**Context:**  
+Data could be loaded into PostgreSQL during Phase 2 for use by the FastAPI backend.
+
+**Decision:**  
+PostgreSQL is not used in Phase 2. All data stays in Parquet files.
+
+**Rationale:**  
+- Loading 4.6M rows into PostgreSQL without a finalized schema would require
+  migration work that belongs in Phase 3 (schema design)
+- Parquet files are readable directly by Polars and DuckDB without a database server
+- Phase 3 will design the database schema based on the actual ML feature requirements,
+  preventing premature schema commits
+- Keeping the database clean avoids polluting Phase 1 Alembic migration history

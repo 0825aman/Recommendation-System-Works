@@ -32,7 +32,7 @@ environment). IBM Bob is NOT an IBM Cloud hosting service — it is the local AI
 | AI-assisted development | IBM Bob | current |
 | Version control | Git + GitHub | current |
 | Frontend | React + TypeScript + Vite | latest stable |
-| Backend | Python + FastAPI | Python 3.13, FastAPI latest stable |
+| Backend | Python + FastAPI | Python 3.14, FastAPI latest stable |
 | Database | PostgreSQL | 16 (Docker) |
 | ORM | SQLAlchemy | latest stable |
 | Migrations | Alembic | latest stable |
@@ -42,11 +42,19 @@ environment). IBM Bob is NOT an IBM Cloud hosting service — it is the local AI
 | Linting/formatting | Ruff | latest stable |
 | HTTP client (frontend) | Axios | latest stable |
 
-### Future Phases Only — Do NOT Install in Phase 1
+### Phase 2 Active (installed in Phase 2)
+| Technology | Purpose |
+|---|---|
+| Polars 2.x | DataFrame operations — cleaning, type casting, schema inspection |
+| DuckDB 2.x | SQL analytics on Parquet files — statistics, distributions |
+| PyArrow | Parquet I/O backend for Polars |
+| tqdm | Download progress bars |
+| rich | Formatted terminal output |
+
+### Future Phases Only — Do NOT Install Before Required
 | Technology | Phase |
 |---|---|
-| Polars, DuckDB | Data processing — Phase 2+ |
-| NumPy, SciPy | Numerical computing — Phase 2+ |
+| NumPy, SciPy | Numerical computing — Phase 3+ |
 | scikit-learn | ML — Phase 3+ |
 | PyTorch | Deep learning — Phase 4+ |
 | LightGBM or XGBoost | Ranking — Phase 4+ |
@@ -96,7 +104,7 @@ hybrid-recommendation-intelligence-platform/
 │   ├── package.json
 │   └── vite.config.ts
 │
-├── backend/                # Python 3.13 + FastAPI
+├── backend/                # Python 3.14 + FastAPI
 │   ├── app/
 │   │   ├── api/v1/         # Versioned route handlers
 │   │   ├── core/           # Config, logging, exceptions
@@ -152,7 +160,7 @@ placeholder implementations for future phases unless there is a specific, approv
 ## 5. Coding Conventions
 
 ### Python
-- Python 3.13, fully typed (use `from __future__ import annotations` where needed)
+- Python 3.14, fully typed (use `from __future__ import annotations` where needed)
 - Follow PEP 8. Enforce with Ruff (`ruff check`, `ruff format`)
 - Ruff line length: 88 characters
 - Use `snake_case` for functions, variables, modules
@@ -242,12 +250,12 @@ These rules are non-negotiable. Violations must be fixed before any commit.
 
 ## 8. Phase Boundaries
 
-### Phase 1 — Foundation (Current)
+### Phase 1 — Foundation ✅ Complete
 Deliverables: working local dev environment, backend skeleton, frontend skeleton, database, Docker Compose, testing setup, documentation.
-**Not in scope:** recommendation algorithms, ML pipelines, authentication, user management, any business logic.
 
-### Phase 2 — Data Layer (Future)
-Deliverables: data ingestion pipeline, schema design for users/items/interactions, Polars/DuckDB integration.
+### Phase 2 — Data Engineering ✅ Complete
+Deliverables: KuaiRec 2.0 acquisition, inspection, validation, cleaning, Parquet conversion, data quality report, pipeline tests, documentation.
+Active tools: Polars, DuckDB, PyArrow.
 
 ### Phase 3 — Recommendation Engine (Future)
 Deliverables: content-based filtering, collaborative filtering, hybrid combining logic.
@@ -316,13 +324,13 @@ uvicorn app.main:app --reload
 cd frontend
 npm run dev
 
-# 4. Run backend tests
+# 4. Run ALL backend tests (Phase 1 + Phase 2 data pipeline)
 cd backend
-pytest tests/ -v
+pytest ../backend/tests/ -v
 
 # 5. Run backend quality checks
-ruff check app/
-ruff format --check app/
+ruff check app/ ../scripts/data/
+ruff format --check app/ ../scripts/data/
 
 # 6. Run frontend checks
 cd frontend
@@ -330,7 +338,18 @@ npm run lint
 npx tsc --noEmit
 ```
 
+## Quick Reference — Phase 2 Data Pipeline
+
+```powershell
+# From project root, all scripts require the backend venv:
+backend\.venv\Scripts\python.exe scripts/data/download_dataset.py
+backend\.venv\Scripts\python.exe scripts/data/inspect_dataset.py
+backend\.venv\Scripts\python.exe scripts/data/validate_dataset.py
+backend\.venv\Scripts\python.exe scripts/data/convert_to_parquet.py
+backend\.venv\Scripts\python.exe scripts/data/generate_report.py
+```
+
 ---
 
-*Last updated: Phase 1 initialization*
+*Last updated: Phase 2 completion*
 *Owner: Project owner — approval required for all architectural changes*

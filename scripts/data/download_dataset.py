@@ -27,8 +27,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from scripts.data.common import (
-    DOWNLOAD_MANIFEST,
     DATASET_LICENSE,
+    DOWNLOAD_MANIFEST,
     KUAIREC_ZIP,
     MANIFEST_PATH,
     RAW_DIR,
@@ -102,7 +102,7 @@ def download_file(url: str, destination: Path, expected_size: int) -> None:
         headers={"User-Agent": "HRIP-DataPipeline/2.0 (academic research)"},
     )
 
-    with urllib.request.urlopen(request) as response:  # noqa: S310
+    with urllib.request.urlopen(request) as response:
         if HAS_TQDM:
             bar = tqdm(
                 total=expected_size,
