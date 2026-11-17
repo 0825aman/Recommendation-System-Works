@@ -13,8 +13,8 @@ The platform combines multiple recommendation strategies:
 - **ML Ranking** — re-rank candidates using learned user preferences
 - **Feedback Loop** — continuously improve recommendations from user interactions
 
-> **Current Status: Phase 2 — Data Engineering ✅ Complete**
-> Phase 1 (foundation) and Phase 2 (data engineering) are complete. KuaiRec 2.0 (4.6M interactions) has been acquired, validated, cleaned, and converted to Parquet. Phase 3 (Recommendation Engine) is next.
+> **Current Status: Phase 3 — Baseline Recommendation Systems ✅ Complete**
+> Phases 1–3 are complete. KuaiRec 2.0 (4.6M interactions) processed, temporal splits created, 5 non-ML baseline recommenders built and evaluated. Best baseline NDCG@10: **0.4461** (PopularityRecommender). Phase 4 (ML-Based Recommendation) is next.
 
 ---
 
@@ -114,12 +114,12 @@ Frontend available at: `http://localhost:5173`
 
 ## Running Tests
 
-### Backend (Phase 1 + Phase 2 — 62 tests)
+### Backend (Phase 1 + Phase 2 + Phase 3 — 134 tests)
 
 ```powershell
 # From project root
 backend\.venv\Scripts\pytest.exe backend/tests/ -v
-backend\.venv\Scripts\ruff.exe check backend/app/ scripts/data/
+backend\.venv\Scripts\ruff.exe check backend/app/ scripts/ ml/ backend/tests/ml/
 ```
 
 ### Frontend
@@ -145,6 +145,14 @@ backend\.venv\Scripts\python.exe scripts/data/generate_report.py
 ```
 
 > **Note:** Dataset files (~1.5 GB) are excluded from Git. Run `download_dataset.py` after cloning.
+
+## Phase 3 Baseline Experiments
+
+```powershell
+# From project root (requires Phase 2 data files)
+backend\.venv\Scripts\python.exe scripts/ml/prepare_splits.py
+backend\.venv\Scripts\python.exe scripts/ml/run_baselines.py
+```
 
 ---
 
@@ -173,9 +181,10 @@ hybrid-recommendation-intelligence-platform/
 |---|---|---|
 | **Phase 1** | Foundation — dev environment, API skeleton, database | ✅ Complete |
 | **Phase 2** | Data Engineering — KuaiRec 2.0 acquisition, Parquet pipeline, quality report | ✅ Complete |
-| Phase 3 | Recommendation Engine — content-based, collaborative, hybrid | ⏳ Planned |
-| Phase 4 | ML Ranking — candidate generation, model serving | ⏳ Planned |
-| Phase 5 | Feedback Loop — online learning, A/B testing, monitoring | ⏳ Planned |
+| **Phase 3** | Baseline Systems — EDA, splits, evaluation framework, 5 baseline recommenders | ✅ Complete |
+| Phase 4 | ML Recommendation — Content-Based Filtering, Collaborative Filtering (ALS) | 🔜 Next |
+| Phase 5 | ML Ranking — candidate generation, LightGBM/XGBoost, MLflow | ⏳ Planned |
+| Phase 6 | Feedback Loop — online learning, A/B testing, monitoring | ⏳ Planned |
 
 ---
 
@@ -185,7 +194,11 @@ hybrid-recommendation-intelligence-platform/
 - [`docs/database/database-overview.md`](docs/database/database-overview.md) — Schema rationale and Alembic workflow
 - [`docs/api/api-overview.md`](docs/api/api-overview.md) — Endpoint reference
 - [`docs/phases/phase-1-setup-guide.md`](docs/phases/phase-1-setup-guide.md) — Step-by-step setup guide for Windows
-- [`docs/decisions/architecture-decisions.md`](docs/decisions/architecture-decisions.md) — Architecture Decision Records (ADR-001 through ADR-D-P2-05)
+- [`docs/phases/phase-3-baseline-guide.md`](docs/phases/phase-3-baseline-guide.md) — Phase 3 setup and results
+- [`docs/decisions/architecture-decisions.md`](docs/decisions/architecture-decisions.md) — Architecture Decision Records (ADR-001 through ADR-P3-07)
+- [`docs/ml/evaluation-methodology.md`](docs/ml/evaluation-methodology.md) — Offline evaluation metrics and split strategy
+- [`docs/ml/baseline-algorithms.md`](docs/ml/baseline-algorithms.md) — All 5 baseline recommender algorithms
+- [`docs/ml/experiment-guide.md`](docs/ml/experiment-guide.md) — How to run and record experiments
 - [`docs/data/dataset-overview.md`](docs/data/dataset-overview.md) — KuaiRec 2.0 dataset summary
 - [`docs/data/data-dictionary.md`](docs/data/data-dictionary.md) — Column-level data dictionary
 - [`docs/data/data-acquisition-guide.md`](docs/data/data-acquisition-guide.md) — How to re-acquire the dataset

@@ -173,3 +173,6 @@ data/metadata/schema/*.json
 
 # Zip archives
 *.zip
+
+# Phase 3 - Experiment results
+experiments/results/*.json

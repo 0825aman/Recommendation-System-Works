@@ -54,13 +54,13 @@ environment). IBM Bob is NOT an IBM Cloud hosting service — it is the local AI
 ### Future Phases Only — Do NOT Install Before Required
 | Technology | Phase |
 |---|---|
-| NumPy, SciPy | Numerical computing — Phase 3+ |
-| scikit-learn | ML — Phase 3+ |
+| NumPy, SciPy | Numerical computing — Phase 4+ |
+| scikit-learn | ML — Phase 4+ |
 | PyTorch | Deep learning — Phase 4+ |
 | LightGBM or XGBoost | Ranking — Phase 4+ |
-| TF-IDF, Sentence Transformers | Text processing — Phase 3+ |
-| FAISS CPU | Vector retrieval — Phase 3+ |
-| MLflow | Experiment tracking — Phase 3+ |
+| TF-IDF, Sentence Transformers | Text processing — Phase 4+ |
+| FAISS CPU | Vector retrieval — Phase 4+ |
+| MLflow | Experiment tracking — Phase 4+ |
 | Redis | Caching — only when justified |
 
 ### Development Environment
@@ -123,14 +123,17 @@ hybrid-recommendation-intelligence-platform/
 │   ├── processed/
 │   └── interim/
 │
-├── ml/                     # ML modules (Phase 2+, structure only)
-│   ├── preprocessing/
-│   ├── features/
-│   ├── content_based/
-│   ├── collaborative/
-│   ├── hybrid/
-│   ├── ranking/
-│   └── evaluation/
+├── ml/                     # ML modules (Phase 3+, active)
+│   ├── baselines/          # Phase 3 non-ML baseline recommenders
+│   ├── data/               # Parquet loaders + temporal split logic
+│   ├── evaluation/         # Offline metrics + Evaluator class
+│   ├── experiments/        # JSON experiment result recorder
+│   ├── features/           # Item + user feature extraction
+│   ├── content_based/      # Phase 4+
+│   ├── collaborative/      # Phase 4+
+│   ├── hybrid/             # Phase 4+
+│   ├── ranking/            # Phase 4+
+│   └── config.py           # ExperimentConfig dataclass
 │
 ├── notebooks/              # Jupyter notebooks (Phase 2+)
 ├── docs/                   # Technical documentation
@@ -217,13 +220,14 @@ placeholder implementations for future phases unless there is a specific, approv
 - Component tests will be added in a future phase (React Testing Library)
 
 ### Quality Gates — All Must Pass Before Committing
-```
-# Backend
-pytest tests/ -v
-ruff check app/
-ruff format --check app/
+```powershell
+# Backend (run from project root)
+backend\.venv\Scripts\pytest.exe backend/tests/ -v
+backend\.venv\Scripts\ruff.exe check backend/app/ scripts/ ml/ backend/tests/ml/
+backend\.venv\Scripts\ruff.exe format --check backend/app/ scripts/ ml/
 
 # Frontend
+cd frontend
 npm run lint
 npx tsc --noEmit
 npm run build
@@ -257,14 +261,22 @@ Deliverables: working local dev environment, backend skeleton, frontend skeleton
 Deliverables: KuaiRec 2.0 acquisition, inspection, validation, cleaning, Parquet conversion, data quality report, pipeline tests, documentation.
 Active tools: Polars, DuckDB, PyArrow.
 
-### Phase 3 — Recommendation Engine (Future)
-Deliverables: content-based filtering, collaborative filtering, hybrid combining logic.
+### Phase 3 — Baseline Recommendation Systems ✅ Complete
+Deliverables: EDA, target label definition, temporal train/val/test splits, offline evaluation framework (7 metrics), 5 non-ML baseline recommenders, JSON experiment tracking, 72 new tests, full documentation.
+ADRs: ADR-P3-01 through ADR-P3-07.
+Best NDCG@10: 0.4461 (PopularityRecommender on KuaiRec 2.0 small_matrix).
+No new pip packages required — pure Python evaluation layer.
 
-### Phase 4 — ML Ranking and Serving (Future)
-Deliverables: candidate generation, ML ranking model, model serving API.
+### Phase 4 — ML-Based Recommendation (Current Target)
+Deliverables: Content-Based Filtering (TF-IDF / item features), Collaborative Filtering (Matrix Factorization / ALS), comparison against Phase 3 baselines on NDCG@10.
+New dependencies: scikit-learn, possibly `implicit` (ALS).
+Dataset: introduce big_matrix for sparse-matrix realism.
 
-### Phase 5 — Feedback Loop and Production Hardening (Future)
-Deliverables: feedback collection, online learning, A/B testing, monitoring.
+### Phase 5 — ML Ranking and Serving (Future)
+Deliverables: candidate generation, LightGBM/XGBoost ranking model, model serving API, MLflow experiment tracking.
+
+### Phase 6 — Feedback Loop and Production Hardening (Future)
+Deliverables: feedback collection, online learning, A/B testing, monitoring, Redis caching.
 
 **Rule:** Do not implement features from a future phase. Do not create empty stub files for future
 phases unless explicitly approved. The phase boundary is a hard scope limit.
@@ -324,13 +336,12 @@ uvicorn app.main:app --reload
 cd frontend
 npm run dev
 
-# 4. Run ALL backend tests (Phase 1 + Phase 2 data pipeline)
-cd backend
-pytest ../backend/tests/ -v
+# 4. Run ALL backend tests (from project root)
+backend\.venv\Scripts\pytest.exe backend/tests/ -v
 
-# 5. Run backend quality checks
-ruff check app/ ../scripts/data/
-ruff format --check app/ ../scripts/data/
+# 5. Run backend quality checks (from project root)
+backend\.venv\Scripts\ruff.exe check backend/app/ scripts/ ml/ backend/tests/ml/
+backend\.venv\Scripts\ruff.exe format --check backend/app/ scripts/ ml/
 
 # 6. Run frontend checks
 cd frontend
@@ -349,7 +360,21 @@ backend\.venv\Scripts\python.exe scripts/data/convert_to_parquet.py
 backend\.venv\Scripts\python.exe scripts/data/generate_report.py
 ```
 
+## Quick Reference — Phase 3 Baselines
+
+```powershell
+# From project root:
+# Generate temporal splits (required once)
+backend\.venv\Scripts\python.exe scripts/ml/prepare_splits.py
+
+# Run all 5 baselines + evaluation
+backend\.venv\Scripts\python.exe scripts/ml/run_baselines.py
+
+# Run EDA report (optional)
+backend\.venv\Scripts\python.exe scripts/ml/run_eda.py
+```
+
 ---
 
-*Last updated: Phase 2 completion*
+*Last updated: Phase 3 completion*
 *Owner: Project owner — approval required for all architectural changes*

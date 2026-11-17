@@ -307,3 +307,153 @@ PostgreSQL is not used in Phase 2. All data stays in Parquet files.
 - Phase 3 will design the database schema based on the actual ML feature requirements,
   preventing premature schema commits
 - Keeping the database clean avoids polluting Phase 1 Alembic migration history
+
+---
+
+## ADR-P3-01 — Phase 3 Redefined as Baseline Recommendation Systems
+
+**Status:** Accepted  
+**Phase:** 3
+
+**Context:**  
+The original AGENTS.md defined Phase 3 as "Recommendation Engine (content-based, collaborative,
+hybrid)." The project owner requested that Phase 3 be scoped to establish measurable benchmarks
+with non-ML heuristic baselines before introducing learned models.
+
+**Decision:**  
+Phase 3 = Baseline Recommendation Systems. Content-based filtering and collaborative filtering
+move to Phase 4. ML ranking moves to Phase 5.
+
+**Rationale:**  
+- Baselines define the measurement scale for all future ML models
+- Evaluation infrastructure built in Phase 3 is reused unchanged in all subsequent phases
+- Isolates the value of each additional signal (popularity → category → temporal → user history → ML)
+- Standard industry practice: Netflix, Spotify, YouTube all benchmark against non-ML baselines
+
+---
+
+## ADR-P3-02 — Relevance Signal and Binary Threshold
+
+**Status:** Accepted  
+**Phase:** 3
+
+**Context:**  
+`watch_ratio` is the only explicit engagement signal in small_matrix. Ranking metrics
+(Precision@K, Recall@K, NDCG@K, MAP@K) require a binary relevant/non-relevant label.
+
+EDA findings:
+- 72.73% of interactions have watch_ratio ≥ 0.5 (3,401,473 of 4,676,570)
+- 27.27% have watch_ratio < 0.5 (non-relevant)
+- 0.65% are exactly 0.0 (video initiated, not played)
+- Median watch_ratio = 0.7692 (P50 is above the threshold)
+
+**Decision:**  
+- Primary signal: `watch_ratio` (continuous)
+- Binary relevance threshold: `watch_ratio ≥ 0.5`
+- Zero-ratio rows: classified as non-relevant; kept in training data
+
+**Rationale:**  
+- 0.5 = watched at least half the video — a meaningful engagement signal
+- Avoids treating brief accidental plays as positive
+- P25 = 0.4676, so the threshold sits just above the first quartile — creates meaningful positive/negative split
+- Can be revisited in Phase 4 sensitivity analysis
+
+**Consequence:**  
+If Phase 4 experiments show threshold sensitivity, run evaluation at 0.3 and 0.7 as ablation.
+
+---
+
+## ADR-P3-03 — Use small_matrix Only; Defer big_matrix to Phase 4
+
+**Status:** Accepted  
+**Phase:** 3
+
+**Context:**  
+KuaiRec 2.0 has two interaction matrices: small_matrix (4.68M rows, 99.6% density,
+1,411 × 3,327) and big_matrix (12.5M rows, 16.3% density, 7,176 × 10,728).
+
+**Decision:**  
+Phase 3 uses small_matrix only. big_matrix is deferred to Phase 4.
+
+**Rationale:**  
+- big_matrix (1,033 MB CSV) requires streaming/chunked processing — not yet implemented
+- small_matrix is dense enough to validate the entire evaluation framework quickly
+- Phase 4 will introduce the realistic sparse scenario (big_matrix) where collaborative
+  filtering adds the most value
+
+---
+
+## ADR-P3-04 — Temporal Train/Validation/Test Split
+
+**Status:** Accepted  
+**Phase:** 3
+
+**Context:**  
+small_matrix spans 2020-07-05 to 2020-09-05 (63 unique dates). 3.89% of rows have null
+timestamps. Standard random splits would leak future data into training.
+
+**Decision:**  
+- Sort all interactions by `timestamp` (fall back to `date` column where null)
+- Assign null-timestamp rows to the training split (conservative assumption)
+- Split proportions: 70% train / 15% validation / 15% test (by time)
+- Split is computed once and saved to `data/processed/kuairec/splits/` as Parquet files
+
+**Rationale:**  
+- Temporal split simulates real deployment conditions
+- Prevents leakage of future interaction patterns into popularity statistics
+- Null-timestamp rows assigned to train = most conservative assumption about their age
+
+---
+
+## ADR-P3-05 — Popularity Metric: Weighted Score
+
+**Status:** Accepted  
+**Phase:** 3
+
+**Context:**  
+Popularity can be measured as raw interaction count or as a quality-weighted score.
+
+**Decision:**  
+`weighted_popularity = mean(watch_ratio) × log(1 + interaction_count)`
+
+**Rationale:**  
+- Raw count rewards items that many users clicked but immediately skipped
+- Weighted score rewards genuine engagement: high reach AND high watch_ratio
+- log(1 + count) dampens the influence of extreme interaction counts
+
+---
+
+## ADR-P3-06 — Experiment Tracking: JSON Files; MLflow Deferred to Phase 4
+
+**Status:** Accepted  
+**Phase:** 3
+
+**Context:**  
+MLflow is in the approved stack but not yet installed.
+
+**Decision:**  
+Phase 3 records experiment results as structured JSON files in `experiments/results/`.
+MLflow is introduced in Phase 4.
+
+**Rationale:**  
+- JSON files are zero-dependency and fully readable without a tracking server
+- Phase 3 baselines have few hyperparameters — the overhead of MLflow is not justified
+
+---
+
+## ADR-P3-07 — ml/ Is a Standalone Module
+
+**Status:** Accepted  
+**Phase:** 3
+
+**Context:**  
+Recommendation logic could be placed inside `backend/app/` or as a standalone module.
+
+**Decision:**  
+All ML code lives in the top-level `ml/` package, with no imports from `backend/app/`,
+`scripts/`, or any FastAPI/SQLAlchemy module.
+
+**Rationale:**  
+- Separation of concerns: web serving vs recommendation logic
+- Enables independent testing and profiling of ML code
+- Consistent with the modular monolith architecture principle (ADR-001)

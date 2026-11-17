@@ -1,0 +1,3 @@
+# experiments/results — Phase 3+ experiment result files
+# These JSON files are generated at runtime and are not committed to Git.
+# See .gitignore for the exclusion rule.
