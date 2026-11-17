@@ -267,13 +267,16 @@ ADRs: ADR-P3-01 through ADR-P3-07.
 Best NDCG@10: 0.4461 (PopularityRecommender on KuaiRec 2.0 small_matrix).
 No new pip packages required — pure Python evaluation layer.
 
-### Phase 4 — ML-Based Recommendation (Current Target)
-Deliverables: Content-Based Filtering (TF-IDF / item features), Collaborative Filtering (Matrix Factorization / ALS), comparison against Phase 3 baselines on NDCG@10.
-New dependencies: scikit-learn, possibly `implicit` (ALS).
-Dataset: introduce big_matrix for sparse-matrix realism.
+### Phase 4 — ML-Based Recommendation ✅ Complete
+Deliverables: Content-Based Filtering (TF-IDF + category one-hot), Collaborative Filtering (UserCF, ItemCF, SVD Matrix Factorization), hit_rate_at_k metric, 3 recommendation API endpoints, hyperparameter tuning on validation split, 91 new tests, full documentation.
+ADRs: ADR-P4-01 through ADR-P4-05.
+Best Phase 4 NDCG@10: 0.1462 (SVDRecommender, n_components=100). PopularityRecommender (0.4461) remains the benchmark on the dense small_matrix.
+New dependency: scikit-learn>=1.5.0 (install with `pip install -e ".[ml]"`).
+Note: CBF NDCG@10=0.0247 is low due to 99.6% matrix density — big_matrix evaluation in Phase 5.
 
-### Phase 5 — ML Ranking and Serving (Future)
-Deliverables: candidate generation, LightGBM/XGBoost ranking model, model serving API, MLflow experiment tracking.
+### Phase 5 — ML Ranking and Serving (Current Target)
+Deliverables: big_matrix evaluation, hybrid CBF+CF recommendation, LightGBM/XGBoost ranking model, candidate generation, model serving API, MLflow experiment tracking.
+New dependencies: LightGBM or XGBoost, MLflow.
 
 ### Phase 6 — Feedback Loop and Production Hardening (Future)
 Deliverables: feedback collection, online learning, A/B testing, monitoring, Redis caching.
@@ -374,7 +377,25 @@ backend\.venv\Scripts\python.exe scripts/ml/run_baselines.py
 backend\.venv\Scripts\python.exe scripts/ml/run_eda.py
 ```
 
+## Quick Reference — Phase 4 ML Algorithms
+
+```powershell
+# Install ML dependencies first (one time)
+cd backend
+.venv\Scripts\pip.exe install -e ".[ml]"
+
+# From project root:
+# Phase 4A — Content-Based Filtering (~7 min due to TF-IDF)
+backend\.venv\Scripts\python.exe scripts/ml/run_content_based.py
+
+# Phase 4B — Collaborative Filtering (~3 min)
+backend\.venv\Scripts\python.exe scripts/ml/run_collaborative.py
+
+# View results via API (requires backend running)
+# GET http://localhost:8000/api/v1/recommendations/results
+```
+
 ---
 
-*Last updated: Phase 3 completion*
+*Last updated: Phase 4 completion*
 *Owner: Project owner — approval required for all architectural changes*

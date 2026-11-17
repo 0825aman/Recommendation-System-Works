@@ -13,8 +13,8 @@ The platform combines multiple recommendation strategies:
 - **ML Ranking** — re-rank candidates using learned user preferences
 - **Feedback Loop** — continuously improve recommendations from user interactions
 
-> **Current Status: Phase 3 — Baseline Recommendation Systems ✅ Complete**
-> Phases 1–3 are complete. KuaiRec 2.0 (4.6M interactions) processed, temporal splits created, 5 non-ML baseline recommenders built and evaluated. Best baseline NDCG@10: **0.4461** (PopularityRecommender). Phase 4 (ML-Based Recommendation) is next.
+> **Current Status: Phase 4 — ML-Based Recommendation ✅ Complete**
+> Phases 1–4 are complete. Content-Based Filtering, Collaborative Filtering (UserCF, ItemCF, SVD) implemented and evaluated. Best ML NDCG@10: **0.1462** (SVDRecommender). Phase 5 (ML Ranking + Hybrid) is next.
 
 ---
 
@@ -114,12 +114,12 @@ Frontend available at: `http://localhost:5173`
 
 ## Running Tests
 
-### Backend (Phase 1 + Phase 2 + Phase 3 — 134 tests)
+### Backend (Phase 1 + Phase 2 + Phase 3 + Phase 4 — 225 tests)
 
 ```powershell
 # From project root
 backend\.venv\Scripts\pytest.exe backend/tests/ -v
-backend\.venv\Scripts\ruff.exe check backend/app/ scripts/ ml/ backend/tests/ml/
+backend\.venv\Scripts\ruff.exe check backend/app/ scripts/ ml/ backend/tests/
 ```
 
 ### Frontend
@@ -182,8 +182,8 @@ hybrid-recommendation-intelligence-platform/
 | **Phase 1** | Foundation — dev environment, API skeleton, database | ✅ Complete |
 | **Phase 2** | Data Engineering — KuaiRec 2.0 acquisition, Parquet pipeline, quality report | ✅ Complete |
 | **Phase 3** | Baseline Systems — EDA, splits, evaluation framework, 5 baseline recommenders | ✅ Complete |
-| Phase 4 | ML Recommendation — Content-Based Filtering, Collaborative Filtering (ALS) | 🔜 Next |
-| Phase 5 | ML Ranking — candidate generation, LightGBM/XGBoost, MLflow | ⏳ Planned |
+| **Phase 4** | ML Recommendation — Content-Based Filtering, Collaborative Filtering (SVD, UserCF, ItemCF) | ✅ Complete |
+| Phase 5 | ML Ranking + Hybrid — big_matrix evaluation, LightGBM/XGBoost, MLflow, hybrid combining | 🔜 Next |
 | Phase 6 | Feedback Loop — online learning, A/B testing, monitoring | ⏳ Planned |
 
 ---
@@ -195,6 +195,7 @@ hybrid-recommendation-intelligence-platform/
 - [`docs/api/api-overview.md`](docs/api/api-overview.md) — Endpoint reference
 - [`docs/phases/phase-1-setup-guide.md`](docs/phases/phase-1-setup-guide.md) — Step-by-step setup guide for Windows
 - [`docs/phases/phase-3-baseline-guide.md`](docs/phases/phase-3-baseline-guide.md) — Phase 3 setup and results
+- [`docs/phases/phase-4-ml-guide.md`](docs/phases/phase-4-ml-guide.md) — Phase 4 ML algorithms, results, and troubleshooting
 - [`docs/decisions/architecture-decisions.md`](docs/decisions/architecture-decisions.md) — Architecture Decision Records (ADR-001 through ADR-P3-07)
 - [`docs/ml/evaluation-methodology.md`](docs/ml/evaluation-methodology.md) — Offline evaluation metrics and split strategy
 - [`docs/ml/baseline-algorithms.md`](docs/ml/baseline-algorithms.md) — All 5 baseline recommender algorithms

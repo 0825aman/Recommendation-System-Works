@@ -9,12 +9,13 @@ Reference metrics:
     - Recall@K     : fraction of relevant items that were recommended
     - NDCG@K       : normalized discounted cumulative gain (ranking quality)
     - MAP@K        : mean average precision at K
+    - Hit Rate@K   : binary — 1 if any top-K recommendation is relevant
     - Catalog Coverage : breadth of recommendations across all users
     - Intra-List Diversity : category variety within a single recommendation list
     - Novelty       : how non-obvious the recommendations are (self-information)
 
 Usage:
-    from ml.evaluation.metrics import precision_at_k, ndcg_at_k
+    from ml.evaluation.metrics import precision_at_k, ndcg_at_k, hit_rate_at_k
 """
 
 from __future__ import annotations
@@ -124,6 +125,26 @@ def average_precision_at_k(recommended: list[int], relevant: set[int], k: int) -
     if hits == 0:
         return 0.0
     return precision_sum / min(len(relevant), k)
+
+
+def hit_rate_at_k(recommended: list[int], relevant: set[int], k: int) -> float:
+    """Compute Hit Rate@K (binary relevance indicator).
+
+    Returns 1.0 if at least one of the top-K recommendations is relevant,
+    otherwise 0.0. Also known as Recall@1-binary or any-hit rate.
+
+    Args:
+        recommended: Ordered list of recommended item IDs (best first).
+        relevant:    Set of ground-truth relevant item IDs for this user.
+        k:           Cutoff rank.
+
+    Returns:
+        1.0 if any top-K item is relevant, else 0.0.
+        Returns 0.0 if recommended is empty, relevant is empty, or k == 0.
+    """
+    if k <= 0 or not recommended or not relevant:
+        return 0.0
+    return float(any(item in relevant for item in recommended[:k]))
 
 
 # ---------------------------------------------------------------------------

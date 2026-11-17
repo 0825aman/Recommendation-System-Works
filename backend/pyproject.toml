@@ -36,6 +36,15 @@ data = [
     "tqdm>=4.0.0",
 ]
 
+# ML dependencies — Phase 4
+# Install with: pip install -e ".[ml]"
+# Required for content-based filtering (TfidfVectorizer) and
+# matrix factorization (TruncatedSVD). Not required by the FastAPI
+# web app at runtime unless serving ML recommendations.
+ml = [
+    "scikit-learn>=1.5.0",
+]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["app*"]

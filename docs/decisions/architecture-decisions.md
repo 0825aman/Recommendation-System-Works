@@ -457,3 +457,114 @@ All ML code lives in the top-level `ml/` package, with no imports from `backend/
 - Separation of concerns: web serving vs recommendation logic
 - Enables independent testing and profiling of ML code
 - Consistent with the modular monolith architecture principle (ADR-001)
+
+
+---
+
+## Phase 4 Architecture Decisions
+
+---
+
+### ADR-P4-01 — Add scikit-learn as Optional [ml] Dependency
+
+**Status:** Accepted | **Phase:** 4 | **Date:** 2026-11-17
+
+**Context:** Phase 4 requires TF-IDF vectorization (Content-Based Filtering) and
+Truncated SVD (Matrix Factorization). Both are available in scikit-learn.
+
+**Decision:** Add `scikit-learn>=1.5.0` to `backend/pyproject.toml` under a new
+`[ml]` optional dependency group. Install with `pip install -e ".[ml]"`.
+
+**Rationale:**
+- scikit-learn 1.9.1 confirmed compatible with Python 3.14.5 on Windows.
+- No GPU requirement — CPU-only operation on integrated AMD Radeon.
+- TfidfVectorizer and TruncatedSVD cover all Phase 4 needs.
+- Separated from `[dev]` and `[data]` groups to keep concerns isolated.
+
+**Consequences:** numpy and scipy are installed as transitive dependencies of
+scikit-learn. Direct imports of numpy are permitted in `ml/` for performance-critical
+matrix operations (similarity scoring, interaction matrix).
+
+---
+
+### ADR-P4-02 — Use Truncated SVD for Matrix Factorization
+
+**Status:** Accepted | **Phase:** 4 | **Date:** 2026-11-17
+
+**Context:** Matrix factorization choices considered: Truncated SVD (scikit-learn),
+ALS (implicit library), NMF (scikit-learn), SVD++ (surprise library).
+
+**Decision:** Use `sklearn.decomposition.TruncatedSVD` with `n_components=100`
+(best validation NDCG@10 of 0.6572).
+
+**Rationale:**
+- Dense matrix (99.6%) makes SVD well-conditioned — no sparse-matrix optimizations needed.
+- scikit-learn covers all requirements without additional packages.
+- ALS (implicit) is designed for sparse implicit feedback — wrong fit for this dataset.
+- Fit time: ~2 seconds for 1,411 × 3,327 matrix with 100 components.
+- Validation NDCG@10: 0.6572 (best of k=20, 50, 100).
+- Test NDCG@10: 0.1462 (note: validation/test gap due to dense matrix characteristics).
+
+---
+
+### ADR-P4-03 — Use Continuous Watch Ratio (Clipped at 5.0) as CF Interaction Signal
+
+**Status:** Accepted | **Phase:** 4 | **Date:** 2026-11-17
+
+**Context:** The interaction signal for the user-item matrix could be binary (0/1
+at watch_ratio ≥ 0.5) or continuous (raw watch_ratio). The raw maximum is 571.5
+(extreme replay loops) which would distort SVD.
+
+**Decision:** Use `min(watch_ratio, 5.0)` as the interaction signal.
+
+**Rationale:**
+- Richer than binary — SVD captures engagement intensity.
+- Raw max (571.5) would dominate the singular value decomposition.
+- 5.0 is a safe clip: the 99th percentile is ~3.6, and 99.5th is below 5.0.
+- Mean watch_ratio = 0.907; median = 0.769 — clipping does not distort typical values.
+
+---
+
+### ADR-P4-04 — Validation Split for Hyperparameter Tuning
+
+**Status:** Accepted | **Phase:** 4 | **Date:** 2026-11-17
+
+**Context:** Phase 4 algorithms have hyperparameters (n_components, n_neighbors,
+tfidf_weight). Using the test split for selection would introduce optimistic bias.
+
+**Decision:** Use `val.parquet` exclusively for hyperparameter selection.
+The test split (`test.parquet`) is reserved for final evaluation only.
+
+**Rationale:**
+- Prevents test-set information leakage into model selection.
+- Consistent with Phase 3 evaluation methodology (ADR-P3-04).
+- Validation configs tried:
+  - SVD: n_components ∈ {20, 50, 100} → best: 100 (val NDCG@10 = 0.6572)
+  - UserCF: n_neighbors ∈ {10, 50, 100} → best: 10 (val NDCG@10 = 0.6459)
+  - ItemCF: n_neighbors ∈ {10, 50} → best: 10 (val NDCG@10 = 0.6437)
+  - CBF: tfidf_weight ∈ {0.0, 0.25, 0.5, 0.75} → best: 0.25 (val NDCG@10 = 0.0829)
+
+---
+
+### ADR-P4-05 — Recommendation API Serves Pre-Computed Results (No Live Inference)
+
+**Status:** Accepted | **Phase:** 4 | **Date:** 2026-11-17
+
+**Context:** Phase 4 adds recommendation API endpoints. Options: (a) load fitted
+models at startup and infer per request; (b) serve pre-computed experiment results
+from JSON files.
+
+**Decision:** Serve pre-computed evaluation results from `experiments/results/*.json`.
+No live model loading at API startup in Phase 4.
+
+**Rationale:**
+- Phase 4 scope is algorithm evaluation, not production serving.
+- Avoids startup latency and memory cost of loading large models.
+- Phase 5 will introduce proper model serving (model registry, caching).
+- The API provides useful observability into algorithm performance without
+  requiring Docker or the ML stack at runtime.
+
+**Endpoints added:**
+- `GET /api/v1/recommendations/results` — all results sorted by NDCG@10
+- `GET /api/v1/recommendations/algorithms` — list of evaluated algorithms
+- `GET /api/v1/recommendations/results/{name}` — result for a specific algorithm

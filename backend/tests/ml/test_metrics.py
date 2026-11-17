@@ -16,6 +16,7 @@ from ml.evaluation.metrics import (
     aggregate_metrics,
     average_precision_at_k,
     catalog_coverage,
+    hit_rate_at_k,
     intra_list_diversity,
     ndcg_at_k,
     novelty,
@@ -136,6 +137,30 @@ class TestNovelty:
 
     def test_empty_recommendations_returns_zero(self) -> None:
         assert novelty([], {1: 10}, n_users=100) == 0.0
+
+
+class TestHitRateAtK:
+    def test_hit_returns_one(self) -> None:
+        assert hit_rate_at_k([1, 2, 3], {3}, k=3) == 1.0
+
+    def test_no_hit_returns_zero(self) -> None:
+        assert hit_rate_at_k([1, 2, 3], {4, 5}, k=3) == 0.0
+
+    def test_cutoff_respected(self) -> None:
+        # Relevant item at rank 4 is outside K=3 window
+        assert hit_rate_at_k([1, 2, 3, 4], {4}, k=3) == 0.0
+
+    def test_hit_at_rank_1(self) -> None:
+        assert hit_rate_at_k([5, 2, 3], {5}, k=1) == 1.0
+
+    def test_empty_recommended(self) -> None:
+        assert hit_rate_at_k([], {1}, k=5) == 0.0
+
+    def test_empty_relevant(self) -> None:
+        assert hit_rate_at_k([1, 2, 3], set(), k=3) == 0.0
+
+    def test_k_zero_returns_zero(self) -> None:
+        assert hit_rate_at_k([1, 2, 3], {1}, k=0) == 0.0
 
 
 class TestAggregateMetrics:
