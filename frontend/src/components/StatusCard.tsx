@@ -22,70 +22,79 @@ export function StatusCard({
   statusLabel,
   details = [],
 }: StatusCardProps) {
+  const borderColor =
+    status === "ok" || status === "connected"
+      ? "#bbf7d0"
+      : status === "error"
+        ? "#fecaca"
+        : "#e5e7eb";
+
   return (
     <div
       style={{
-        background: "#f9fafb",
-        border: "1px solid #e5e7eb",
+        background: "#ffffff",
+        border: `1px solid ${borderColor}`,
+        borderTop: `3px solid ${status === "ok" || status === "connected" ? "#22c55e" : status === "error" ? "#ef4444" : "#d1d5db"}`,
         borderRadius: "0.5rem",
-        padding: "1.25rem 1.5rem",
+        padding: "1.25rem 1.375rem",
         display: "flex",
         flexDirection: "column",
-        gap: "0.75rem",
-        minWidth: "260px",
-        flex: "1",
+        gap: "0.875rem",
       }}
     >
+      {/* Card title */}
       <div
         style={{
-          fontSize: "0.75rem",
-          fontWeight: 600,
-          letterSpacing: "0.05em",
+          fontSize: "0.72rem",
+          fontWeight: 700,
+          letterSpacing: "0.07em",
           textTransform: "uppercase",
-          color: "#6b7280",
+          color: "#9ca3af",
         }}
       >
         {title}
       </div>
 
+      {/* Status indicator */}
       <StatusIndicator status={status} label={statusLabel} />
 
+      {/* Detail rows */}
       {details.length > 0 && (
-        <dl
+        <div
           style={{
-            margin: 0,
-            display: "grid",
-            gridTemplateColumns: "auto 1fr",
-            gap: "0.25rem 1rem",
+            borderTop: "1px solid #f3f4f6",
+            paddingTop: "0.75rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.35rem",
           }}
         >
           {details.map(({ label, value }) => (
             <div
               key={label}
-              style={{ display: "contents" }}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                gap: "0.5rem",
+              }}
             >
-              <dt
-                style={{
-                  fontSize: "0.8rem",
-                  color: "#9ca3af",
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <span style={{ fontSize: "0.78rem", color: "#9ca3af", flexShrink: 0 }}>
                 {label}
-              </dt>
-              <dd
+              </span>
+              <span
                 style={{
-                  fontSize: "0.8rem",
+                  fontSize: "0.78rem",
                   color: "#374151",
-                  margin: 0,
-                  fontFamily: "monospace",
+                  fontFamily: "ui-monospace, monospace",
+                  textAlign: "right",
                 }}
               >
                 {value}
-              </dd>
+              </span>
             </div>
           ))}
-        </dl>
+        </div>
       )}
     </div>
   );
