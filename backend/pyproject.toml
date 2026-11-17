@@ -25,6 +25,17 @@ dev = [
     "ruff>=0.6.0",
 ]
 
+# Data engineering dependencies — Phase 2
+# Install with: pip install -e ".[data]"
+# Not required by the FastAPI web app at runtime.
+data = [
+    "polars>=1.0.0",
+    "duckdb>=1.0.0",
+    "pyarrow>=17.0.0",
+    "rich>=13.0.0",
+    "tqdm>=4.0.0",
+]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["app*"]
