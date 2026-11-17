@@ -150,3 +150,26 @@ logs/
 *.tmp
 *.temp
 .cache/
+
+# -----------------------------------------------------------------------------
+# Phase 2 — KuaiRec dataset files (all excluded from Git)
+# -----------------------------------------------------------------------------
+# Raw downloads
+data/raw/kuairec/
+
+# Interim processing files
+data/interim/kuairec/
+
+# Processed outputs (Parquet, reports)
+data/processed/kuairec/
+
+# Generated manifests (large JSON files)
+data/manifests/*.json
+!data/manifests/.gitkeep
+
+# Generated metadata schemas
+data/metadata/schema/*.json
+!data/metadata/schema/.gitkeep
+
+# Zip archives
+*.zip
